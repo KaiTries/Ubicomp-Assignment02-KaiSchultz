@@ -2,20 +2,42 @@ using ARETT;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class GazeReceiverScript : MonoBehaviour
 {
-
     // connect the DtatProvider-Prefab from ARETT in the Unity Editor
     public DataProvider DataProvider;
     private ConcurrentQueue<Action> _mainThreadWorkQueue = new ConcurrentQueue<Action>();
 
+    private static HttpClient httpClient = new HttpClient()
+    {
+        BaseAddress = new Uri("http://localhost:8081"),
+    };
+
+    static async Task PostAsync(HttpClient httpClient, String t)
+    {
+
+        using StringContent jsonContent = new(t);
+        Debug.Log(jsonContent);
+
+        using HttpResponseMessage response = await httpClient.PostAsync(
+            "/",
+            jsonContent);
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        Debug.Log(jsonResponse);
+        
+        return;
+
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-
+        StartArettData();
     }
 
     // Update is called once per frame
@@ -93,6 +115,10 @@ public class GazeReceiverScript : MonoBehaviour
         t += "\nGazeHasValue: " + gd.GazeHasValue;
         t += "\nGazePoint: " + gd.GazePoint;
         t += "\nGazePointMonoDisplay: " + gd.GazePointMonoDisplay;
+
+
+        PostAsync(httpClient, t);
+
         Debug.Log(t);
 
         // DO SOMETHING with the gaze data
@@ -100,4 +126,5 @@ public class GazeReceiverScript : MonoBehaviour
 
 
     }
+
 }
