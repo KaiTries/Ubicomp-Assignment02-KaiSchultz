@@ -45,6 +45,7 @@ def process_data_async():
     global ALL_COLLECTED_DATA
 
     while True:
+        print("Checking for new data...")
         if len(ALL_COLLECTED_DATA) > 1:
             # Get the timestamps of the most recent and oldest data
             start_timestamp = ALL_COLLECTED_DATA["eyeDataTimestamp"].min()
@@ -54,14 +55,7 @@ def process_data_async():
 
             # check if most recent data is no older than 10 seconds
             # if it is we can drop the data and wait for more
-            if (int(time.time() * 1000) - end_timestamp) / 1000 > 5:
-                print("Current time: ", getTime(time.time()))
-                print("End timestamp: ", getTime(end_timestamp / 1000))
-                print("Time difference: ", int(time.time() * 1000) - end_timestamp)
-                print("Stale data. Waiting for more data.")
-                ALL_COLLECTED_DATA = pd.DataFrame()
-                time.sleep(PERIODIC_CHECK)
-                continue
+
 
 
 
@@ -110,11 +104,11 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def decodeARTT(self, post_data_str):
         global ALL_COLLECTED_DATA  # Declare that we are using the global DataFrame
         parsed_data = {}
-        
         for line in post_data_str.split('\n'):
             if line:
                 try:
-                    key, value = line.split(':', 1)
+                    key, value = line.split(':',1)
+                    print("Key:", key, " Vaylue: ", value)
                     if key.strip() in ['gazeDirection_x', 'gazeDirection_y', 'gazeDirection_z']:
                         parsed_data[key.strip()] = float(value.strip())
                     elif key.strip() == 'eyeDataTimestamp':
@@ -135,6 +129,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         post_data_str = post_data.decode('utf-8')
         self.decodeARTT(post_data_str=post_data_str)
         self.send_response_only(200)
+        self.end_headers()
 
 def start_server():
     """ Function that starts the server. """
