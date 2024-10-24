@@ -4,17 +4,25 @@ using System.Net;
 using System.Threading;
 using UnityEngine;
 using PimDeWitte.UnityMainThreadDispatcher;
+using UnityEngine.Windows.Speech;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 public class HttpServerScript : MonoBehaviour
 {
     private HttpListener listener;
     public TMPro.TMP_Text textMeshPro;
+    public TMPro.TMP_Text popUpTest;
     private Thread listenerThread;
     private bool serverRunning = false;
     private String currentPrediction;
     public GameObject popUpContainer;
+    private DictationRecognizer dictationRecognizer;
 
     public int port = 8080; // The port the server will listen on
+    private Task<HttpResponseMessage> response;
 
     void Start()
     {
@@ -98,23 +106,58 @@ public class HttpServerScript : MonoBehaviour
 
             if (currentPrediction.Equals("Reading"))
             {
+
                 popUpContainer.SetActive(true);
+                popUpTest.text = "Looking for a Word? Simply say it.";
+                StartListeningForWord();
                 Debug.Log("reading");
             } else if (currentPrediction.Equals("Search"))
             {
+                popUpTest.text = "Want me to start object recognition?";
                 popUpContainer.SetActive(true);
+                StartListeningForWord();
+
                 Debug.Log("searching");
             } else if (currentPrediction.Equals("Inspection"))
             {
+                popUpTest.text = "Do you need additional Information?";
                 popUpContainer.SetActive(true);
+                StartListeningForWord();
+
                 Debug.Log("inspecting");
             }
         }
     }
 
 
+    private void StartListeningForWord() {
+        dictationRecognizer = new DictationRecognizer();
+        dictationRecognizer.DictationResult += DictationRecognizer_DictationResult;
+        dictationRecognizer.Start();
+
+    }
+
+    private void DictationRecognizer_DictationResult(string text, ConfidenceLevel confidence)
+    {
+        popUpTest.text = "Looking for: " + text;
+
+        HttpClient client = new HttpClient()
+        {
+            BaseAddress = new Uri(" https://api.dictionaryapi.dev/api/v2/entries/en/"),
+        };
+
+        HttpResponseMessage result = client.GetAsync(text).Result;
+        Debug.Log(result.Content);
+
+        Debug.Log(text);
+    }
+
+
     public void DisableButton() {
         popUpContainer.SetActive(false);
+        dictationRecognizer.DictationResult -= DictationRecognizer_DictationResult;
+        dictationRecognizer.Stop();
+        dictationRecognizer.Dispose();
     }
 
 

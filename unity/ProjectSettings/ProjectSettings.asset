@@ -682,7 +682,7 @@ PlayerSettings:
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: unity
-  metroPackageVersion: 
+  metroPackageVersion: 1.0.0.0
   metroCertificatePath: Assets/WSATestCertificate.pfx
   metroCertificatePassword: 
   metroCertificateSubject: DefaultCompany
@@ -690,7 +690,7 @@ PlayerSettings:
   metroCertificateNotAfter: 8063f96e3744dc01
   metroApplicationDescription: unity
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: unity
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0
