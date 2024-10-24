@@ -6,13 +6,15 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 
+
 public class GazeReceiverScript : MonoBehaviour
 {
     // connect the DtatProvider-Prefab from ARETT in the Unity Editor
     public DataProvider DataProvider;
     private ConcurrentQueue<Action> _mainThreadWorkQueue = new ConcurrentQueue<Action>();
+    private bool coroutineRunning = false;
 
-    private static HttpClient httpClient = new HttpClient()
+    private static readonly HttpClient httpClient = new()
     {
         BaseAddress = new Uri("http://localhost:8081"),
     };
@@ -21,15 +23,13 @@ public class GazeReceiverScript : MonoBehaviour
     {
 
         using StringContent jsonContent = new(t);
-        Debug.Log(jsonContent);
 
         using HttpResponseMessage response = await httpClient.PostAsync(
             "/",
             jsonContent);
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        Debug.Log(jsonResponse);
-        
+
         return;
 
     }
@@ -37,7 +37,6 @@ public class GazeReceiverScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        StartArettData();
     }
 
     // Update is called once per frame
@@ -62,7 +61,17 @@ public class GazeReceiverScript : MonoBehaviour
     /// </summary>
     public void StartArettData()
     {
-        StartCoroutine(SubscribeToARETTData());
+        if (coroutineRunning)
+        {
+            UnsubscribeFromARETTData();
+            StopAllCoroutines();
+            coroutineRunning = false;
+        }
+        else
+        {
+            StartCoroutine(SubscribeToARETTData());
+            coroutineRunning = true;
+        }
     }
 
     /// <summary>
@@ -108,22 +117,17 @@ public class GazeReceiverScript : MonoBehaviour
         // Some exemplary values from ARETT.
         // for a full list of available data see:
         // https://github.com/AR-Eye-Tracking-Toolkit/ARETT/wiki/Log-Format#gaze-data
-        string t = "received GazeData\n";
-        t += "EyeDataRelativeTimestamp:" + gd.EyeDataRelativeTimestamp;
-        t += "\nGazeDirection: " + gd.GazeDirection;
-        t += "\nGazePointWebcam: " + gd.GazePointWebcam;
-        t += "\nGazeHasValue: " + gd.GazeHasValue;
-        t += "\nGazePoint: " + gd.GazePoint;
-        t += "\nGazePointMonoDisplay: " + gd.GazePointMonoDisplay;
-
-
-        PostAsync(httpClient, t);
-
+        string t = "";
+        t += "eyeDataTimestamp:" + gd.EyeDataTimestamp; 
+        t += "\nisCalibrationValid:" + gd.IsCalibrationValid;
+        t += "\ngazeHasValue:" + gd.GazeHasValue;
+        t += "\ngazeDirection_x:" + gd.GazeDirection.x;
+        t += "\ngazeDirection_y:" + gd.GazeDirection.y;
+        t += "\ngazeDirection_z:" + gd.GazeDirection.z;
+        
         Debug.Log(t);
 
-        // DO SOMETHING with the gaze data
-
-
+        _ = PostAsync(httpClient, t);
 
     }
 
