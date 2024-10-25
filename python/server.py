@@ -82,7 +82,11 @@ def process_data_async():
                     print(predicted_classes)
                     print(predicted_labels)
                     print(f"Prediction result: {predicted_labels[0]}")
-                    send_prediction_to_server(predicted_labels[0], result[0][predicted_classes[0]])
+                    # can add check to only send prediciton if passed certainty threshhold
+                    if result[0][predicted_classes[0]] > 0.7:
+                        send_prediction_to_server(predicted_labels[0], result[0][predicted_classes[0]])
+                    else:
+                        print("Prediction not sent, not enough certainty.")
                     PERIODIC_CHECK = 2
                 else:
                     PERIODIC_CHECK = 5
