@@ -4,9 +4,8 @@ import utils
 import pickle
 import pandas as pd
 import json
-import numpy as np
-from sklearn import svm
 from sklearn.preprocessing import MaxAbsScaler
+from tensorflow.keras.models import load_model
 import warnings
 import threading
 import time
@@ -16,9 +15,10 @@ import datetime
 # Suppress all future warnings, including those from pandas
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# Load the model and the scaler
-model = pickle.load(open('finalized_model.sav','rb'))
+model = load_model('model.keras')
 scaler = MaxAbsScaler()
+with open('label_encoder.pkl', 'rb') as f:
+    label_encoder = pickle.load(f)
 
 
 # Define the port to run the server on
@@ -35,7 +35,7 @@ def send_prediction_to_server(prediction, probability):
     """ Function that sends the prediction to the server. """
     url = "http://localhost:8082"
     headers = {'Content-type': 'application/json'}
-    data = {"prediction": prediction, "probability": probability}
+    data = {"prediction": prediction, "probability": str(probability)}
     response = requests.post(url, data=json.dumps(data), headers=headers)
     print(response.text)
 
@@ -69,23 +69,21 @@ def process_data_async():
 
                 feature_set = features[0]
                 feature_set = pd.DataFrame([feature_set])
-                feature_set = feature_set[['xDir', 'fixDensPerBB', 'stdFix', 'meanDis', 'maxDis', 'stdDisp', 'maxFix']]
+                feature_set = feature_set.drop(columns=['duration'])
                 feature_set = scaler.fit_transform(feature_set)
-                feature_set = pd.DataFrame(feature_set, columns=['xDir', 'fixDensPerBB', 'stdFix', 'meanDis', 'maxDis', 'stdDisp', 'maxFix'])
 
                 # Ensure that the array has at least one row before prediction
                 if len(features) > 0:
-                    result_proba = model.predict_proba(feature_set)
+                    print("trying to predict")
                     result = model.predict(feature_set)
-                    print(result_proba)
+                    predicted_classes = result.argmax(axis=1)  # Get class index with highest probability
+                    predicted_labels = label_encoder.inverse_transform(predicted_classes)
                     print(result)
-                    if max(result_proba[0]) > 0.75:
-                        print(f"Prediction result: {result[0]}")
-                        send_prediction_to_server(result[0], max(result_proba[0]))
-                        PERIODIC_CHECK = 2
-                    else:
-                        PERIODIC_CHECK = 5
-                        print("Prediction probability too low.")
+                    print(predicted_classes)
+                    print(predicted_labels)
+                    print(f"Prediction result: {predicted_labels[0]}")
+                    send_prediction_to_server(predicted_labels[0], result[0][predicted_classes[0]])
+                    PERIODIC_CHECK = 2
                 else:
                     PERIODIC_CHECK = 5
                     print("No valid features to predict.")
