@@ -55,7 +55,11 @@ def process_data_async():
 
             # check if most recent data is no older than 10 seconds
             # if it is we can drop the data and wait for more
-
+            if (int(time.time() * 1000) - end_timestamp) / 1000 > 5:
+                print("Data too old, dropping.")    
+                ALL_COLLECTED_DATA = pd.DataFrame()
+                time.sleep(PERIODIC_CHECK)
+                continue
 
 
 
