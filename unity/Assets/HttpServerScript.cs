@@ -63,7 +63,8 @@ public class HttpServerScript : MonoBehaviour
                         PredictionData predictionData = JsonUtility.FromJson<PredictionData>(requestData);
                         Debug.Log($"Received prediction: {predictionData.prediction}  with propability: {predictionData.probability}");
 
-                        UnityMainThreadDispatcher.Instance().Enqueue(() => {
+                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                        {
                             UpdateCurrentPrediction(predictionData);
                         });
 
@@ -97,9 +98,10 @@ public class HttpServerScript : MonoBehaviour
         Debug.Log("HTTP Server stopped.");
     }
 
-    void UpdateCurrentPrediction(PredictionData data)  
+    void UpdateCurrentPrediction(PredictionData data)
     {
-        if (!data.prediction.Equals(currentPrediction)) {
+        if (!data.prediction.Equals(currentPrediction))
+        {
             textMeshPro.text = data.prediction;
             currentPrediction = data.prediction;
             Debug.Log(currentPrediction);
@@ -111,26 +113,25 @@ public class HttpServerScript : MonoBehaviour
                 popUpTest.text = "Looking for a Word? Simply say it.";
                 StartListeningForWord();
                 Debug.Log("reading");
-            } else if (currentPrediction.Equals("Search"))
+            }
+            else if (currentPrediction.Equals("Search"))
             {
-                popUpTest.text = "Want me to start object recognition?";
+                popUpTest.text = "Starting Object recognition.";
                 popUpContainer.SetActive(true);
-                StartListeningForWord();
-
                 Debug.Log("searching");
-            } else if (currentPrediction.Equals("Inspection"))
+            }
+            else if (currentPrediction.Equals("Inspection"))
             {
                 popUpTest.text = "Do you need additional Information?";
                 popUpContainer.SetActive(true);
-                StartListeningForWord();
-
                 Debug.Log("inspecting");
             }
         }
     }
 
 
-    private void StartListeningForWord() {
+    private void StartListeningForWord()
+    {
         dictationRecognizer = new DictationRecognizer();
         dictationRecognizer.DictationResult += DictationRecognizer_DictationResult;
         dictationRecognizer.Start();
@@ -153,7 +154,8 @@ public class HttpServerScript : MonoBehaviour
     }
 
 
-    public void DisableButton() {
+    public void DisableButton()
+    {
         popUpContainer.SetActive(false);
         dictationRecognizer.DictationResult -= DictationRecognizer_DictationResult;
         dictationRecognizer.Stop();
